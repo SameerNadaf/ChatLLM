@@ -23,6 +23,9 @@ struct ChatView: View {
             VStack(spacing: 0) {
                 messagesScrollView
             }
+            .onTapGesture {
+                hideKeyboard()
+            }
             .navigationTitle("ChatLLM")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -38,11 +41,6 @@ struct ChatView: View {
                     .background(.ultraThinMaterial)
             }
         }
-        .gesture(
-            TapGesture().onEnded {
-                hideKeyboard()
-            }
-        )
         .onAppear {
             AppLogger.log(category: AppLogger.chat, message: "ChatView appeared.")
         }

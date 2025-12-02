@@ -12,7 +12,7 @@ struct SettingsView: View {
 
     var body: some View {
         List {
-            Section("Available LLM Models (GGUF)") {
+            Section("Available LLM Models") {
                 Text("Download a model first, then tap it to activate.")
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -21,10 +21,48 @@ struct SettingsView: View {
 
                     HStack {
                         VStack(alignment: .leading) {
-                            Text(model.name).fontWeight(.medium)
-                            Text(model.filename)
+                            Text(model.name)
+                                .fontWeight(.medium)
+                            
+                            Text(model.description)
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                            
+                            HStack {
+                                RoundedRectangle(cornerRadius: 6)
+                                    .foregroundStyle(Color.secondary.opacity(0.12))
+                                    .frame(width: 60)
+                                    .overlay(alignment: .center) {
+                                        Text(model.size)
+                                            .font(.caption2)
+                                            .padding(4)
+                                    }
+                                    
+                                    
+                                if model.size.contains("GB") {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .foregroundColor(.orange)
+                                            .font(.caption)
+                                        
+                                        Text("Heavy")
+                                            .font(.caption2)
+                                            .bold()
+                                            .foregroundColor(.orange)
+                                    }
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 4)
+                                    .frame(width: 80)
+                                    .background(Color.orange.opacity(0.15))
+                                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                                    .background {
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke()
+                                            .foregroundStyle(Color.orange)
+                                    }
+                                }
+                            }
+                            .frame(height: 25)
+                            
                         }
 
                         Spacer()
@@ -86,7 +124,7 @@ struct SettingsView: View {
                 AppLogger.log(category: AppLogger.settings, message: "User tapped Download button for: \(model.wrappedValue.name)")
                 service.downloadModel(model.wrappedValue)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.borderless)
 
         case .downloading(let progress):
             VStack(alignment: .trailing) {

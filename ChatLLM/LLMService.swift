@@ -22,6 +22,8 @@ struct AvailableModel: Identifiable {
     let id = UUID()
     let name: String
     let filename: String
+    let description: String
+    let size: String
     let downloadUrl: URL
 
     var downloadState: DownloadState = .notDownloaded
@@ -52,6 +54,8 @@ final class LLMService: ObservableObject {
             AvailableModel(
                 name: "TinyLlama 1.1B Chat",
                 filename: "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf",
+                description: "Fastest, simple chats.",
+                size: "637 MB",
                 downloadUrl: URL(string:
                     "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf"
                 )!
@@ -61,6 +65,8 @@ final class LLMService: ObservableObject {
             AvailableModel(
                 name: "Qwen2 1.5B Instruct",
                 filename: "qwen2-1_5b-instruct-q4_k_m.gguf",
+                description: "Best small model, balanced.",
+                size: "800 MB",
                 downloadUrl: URL(string:
                     "https://huggingface.co/Qwen/Qwen2-1.5B-Instruct-GGUF/resolve/main/qwen2-1_5b-instruct-q4_k_m.gguf"
                 )!
@@ -70,6 +76,8 @@ final class LLMService: ObservableObject {
             AvailableModel(
                 name: "Phi-2 2.7B",
                 filename: "phi-2.Q4_K_M.gguf",
+                description: "Strong coding + math.",
+                size: "1.6 GB",
                 downloadUrl: URL(string:
                                     "https://huggingface.co/TheBloke/phi-2-GGUF/resolve/main/phi-2.Q4_K_M.gguf"
                 )!
@@ -79,6 +87,8 @@ final class LLMService: ObservableObject {
             AvailableModel(
                 name: "Phi-3 Mini 3.8B",
                 filename: "phi-3-mini-4k-instruct-q4_k_m.gguf",
+                description: "High quality general model.",
+                size: "2.3 GB",
                 downloadUrl: URL(string:
                                     "https://huggingface.co/SixOpen/Phi-3-mini-4k-instruct-Q4_K_M-GGUF/resolve/main/phi-3-mini-4k-instruct-q4_k_m.gguf"
                 )!
@@ -88,6 +98,8 @@ final class LLMService: ObservableObject {
             AvailableModel(
                 name: "Mistral 7B Instruct",
                 filename: "mistral-7b-instruct-v0.2.Q4_K_M.gguf",
+                description: "Best reasoning, heaviest.",
+                size: "4.1 GB",
                 downloadUrl: URL(string:
                     "https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/resolve/main/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
                 )!
