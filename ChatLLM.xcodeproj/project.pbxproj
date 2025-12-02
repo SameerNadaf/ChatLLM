@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		2F3151152EDEA8610045D7BD /* LLM in Frameworks */ = {isa = PBXBuildFile; productRef = 2F3151142EDEA8610045D7BD /* LLM */; };
+		2FF2A5B82EDEC9B2005AFDD1 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 2FF2A5B72EDEC9B2005AFDD1 /* Lottie */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2F3151152EDEA8610045D7BD /* LLM in Frameworks */,
+				2FF2A5B82EDEC9B2005AFDD1 /* Lottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,6 +73,7 @@
 			name = ChatLLM;
 			packageProductDependencies = (
 				2F3151142EDEA8610045D7BD /* LLM */,
+				2FF2A5B72EDEC9B2005AFDD1 /* Lottie */,
 			);
 			productName = ChatLLM;
 			productReference = 2F3150FE2EDEA77F0045D7BD /* ChatLLM.app */;
@@ -102,6 +105,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				2F3151132EDEA8610045D7BD /* XCRemoteSwiftPackageReference "LLM" */,
+				2FF2A5B62EDEC9B2005AFDD1 /* XCRemoteSwiftPackageReference "lottie-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 2F3150FF2EDEA77F0045D7BD /* Products */;
@@ -349,6 +353,14 @@
 				minimumVersion = 1.4.3;
 			};
 		};
+		2FF2A5B62EDEC9B2005AFDD1 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.5.2;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -356,6 +368,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2F3151132EDEA8610045D7BD /* XCRemoteSwiftPackageReference "LLM" */;
 			productName = LLM;
+		};
+		2FF2A5B72EDEC9B2005AFDD1 /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2FF2A5B62EDEC9B2005AFDD1 /* XCRemoteSwiftPackageReference "lottie-ios" */;
+			productName = Lottie;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

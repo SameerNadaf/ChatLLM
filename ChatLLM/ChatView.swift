@@ -9,6 +9,9 @@ import SwiftUI
 
 struct ChatView: View {
     @EnvironmentObject var service: LLMService
+    @StateObject private var keyboard = KeyboardObserver()
+    @StateObject private var keyboardState = KeyboardState()
+
     
     @State private var inputText: String = ""
     @State private var messages: [ChatMessage] = []
@@ -19,9 +22,8 @@ struct ChatView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 messagesScrollView
-                inputBar
             }
-            .navigationTitle("Local LLM Chat")
+            .navigationTitle("ChatLLM")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
@@ -31,7 +33,16 @@ struct ChatView: View {
                     }
                 }
             }
+            .safeAreaInset(edge: .bottom) {
+                inputBar
+                    .background(.ultraThinMaterial)
+            }
         }
+        .gesture(
+            TapGesture().onEnded {
+                hideKeyboard()
+            }
+        )
         .onAppear {
             AppLogger.log(category: AppLogger.chat, message: "ChatView appeared.")
         }
@@ -39,43 +50,53 @@ struct ChatView: View {
     
     // MARK: - Scrollable messages
     var messagesScrollView: some View {
-        ScrollViewReader { proxy in
-            List {
-                ForEach(messages) { message in
-                    ChatBubble(message: message)
-                }
-                
-                if isGenerating {
-                    ChatBubble(
-                        message: ChatMessage(text: streamingResponse + "█", isUser: false)
-                    )
-                    .id("stream")
+        ZStack {
+            // Lottie Placeholder when empty
+            if messages.isEmpty && !isGenerating && !keyboardState.isVisible {
+                VStack {
+                    LottieAnimationView(fileName: "emptyGhost", title: "Start a conversation!", subtitle: "Start fresh conversation with ChatLLM")
                 }
             }
-            .listStyle(.plain)
-            .onChange(of: messages.count) {
-                AppLogger.log(category: AppLogger.chat, message: "Message count updated: \(messages.count)")
-                withAnimation {
-                    proxy.scrollTo(messages.last?.id, anchor: .bottom)
+
+            // Actual Messages + Streaming Bubble
+            ScrollViewReader { proxy in
+                List {
+                    ForEach(messages) { message in
+                        ChatBubble(message: message)
+                    }
+
+                    if isGenerating {
+                        ChatBubble(
+                            message: ChatMessage(text: streamingResponse + "█", isUser: false)
+                        )
+                        .id("stream")
+                    }
                 }
-            }
-            .onChange(of: streamingResponse) {
-                withAnimation {
-                    proxy.scrollTo("stream", anchor: .bottom)
+                .opacity(messages.isEmpty && !isGenerating ? 0 : 1)
+                .listStyle(.plain)
+                .onChange(of: messages.count) {
+                    withAnimation {
+                        proxy.scrollTo(messages.last?.id, anchor: .bottom)
+                    }
+                }
+                .onChange(of: streamingResponse) {
+                    withAnimation {
+                        proxy.scrollTo("stream", anchor: .bottom)
+                    }
                 }
             }
         }
     }
+
     
     // MARK: - Input bar
     var inputBar: some View {
         HStack {
             TextField("Ask the model...", text: $inputText, axis: .vertical)
-                .padding(.leading)
-                .frame(height: 44)
+                .padding()
+                .frame(minHeight: 44)
                 .background(.white)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
-                .padding(.leading)
             
             Button {
                 Task { await sendTapped() }
@@ -84,10 +105,8 @@ struct ChatView: View {
                     .font(.system(size: 26))
             }
             .disabled(inputText.isEmpty || isGenerating || !service.isModelReady)
-            .padding(.trailing)
         }
-        .frame(minHeight: 60)
-        .background(.ultraThinMaterial)
+        .padding()
     }
     
     // MARK: - Send Action
@@ -104,7 +123,7 @@ struct ChatView: View {
         isGenerating = true
         streamingResponse = ""
         
-        // 🚀 Use the CORRECT streaming method
+        // Use the CORRECT streaming method
         AppLogger.log(category: AppLogger.chat, message: "Initiating stream request...")
         let stream = await service.sendMessageStream(userText)
         
@@ -154,6 +173,14 @@ struct ChatBubble: View {
         .listRowSeparator(.hidden)
     }
 }
+
+extension View {
+    func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                        to: nil, from: nil, for: nil)
+    }
+}
+
 
 #Preview {
     ChatView()
