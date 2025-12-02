@@ -36,6 +36,7 @@ struct ChatView: View {
             .safeAreaInset(edge: .bottom) {
                 inputBar
                     .background(.ultraThinMaterial)
+                    .transaction { $0.animation = nil }
             }
         }
         .onAppear {

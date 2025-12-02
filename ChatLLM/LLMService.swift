@@ -87,7 +87,7 @@ final class LLMService: ObservableObject {
             AvailableModel(
                 name: "Phi-3 Mini 3.8B",
                 filename: "phi-3-mini-4k-instruct-q4_k_m.gguf",
-                description: "High quality general model.",
+                description: "Capable general model.",
                 size: "2.3 GB",
                 downloadUrl: URL(string:
                                     "https://huggingface.co/SixOpen/Phi-3-mini-4k-instruct-Q4_K_M-GGUF/resolve/main/phi-3-mini-4k-instruct-q4_k_m.gguf"
