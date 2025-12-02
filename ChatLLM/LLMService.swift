@@ -43,8 +43,7 @@ final class LLMService: ObservableObject {
     private let fm = FileManager.default
     private let selectedModelKey = "SelectedModelFilename"
 
-    // Chat history for ChatML formatting
-    private var history: [(role: String, content: String)] = []
+
 
     // MARK: - Init
     init() {
@@ -200,7 +199,7 @@ final class LLMService: ObservableObject {
         }
 
         do {
-            let template = Template.chatML("You are a helpful assistant.")
+            let template = Template.chatML("You are a helpful assistant. Answer concisely and directly.")
             guard let loaded = LLM(from: path, template: template) else {
                 print("Failed to init LLM: returned nil")
                 isModelLoading = false
@@ -209,7 +208,7 @@ final class LLMService: ObservableObject {
 
             llm = loaded
             isModelReady = true
-            history.removeAll()
+
 
             for i in availableModels.indices { availableModels[i].isSelected = false }
             if let idx = availableModels.firstIndex(where: { $0.filename == filename }) {
@@ -227,27 +226,38 @@ final class LLMService: ObservableObject {
 
     // MARK: - Prompt builder (ChatML)
     private func buildPrompt(_ user: String) -> String {
-        var s = ""
-        for msg in history {
-            s += "<|\(msg.role)|>\n\(msg.content)\n"
-        }
-        s += "<|user|>\n\(user)\n<|assistant|>\n"
-        return s
+        return "<|user|>\n\(user)\n<|assistant|>\n"
     }
 
     // MARK: - STREAMING MESSAGE
     func sendMessageStream(_ text: String) async -> AsyncStream<String> {
-        guard let llm else {
-            return AsyncStream { c in c.yield("Model not loaded."); c.finish() }
+        // STATELESS MODE: Re-init model for every request to ensure fresh context.
+        guard let filename = UserDefaults.standard.string(forKey: selectedModelKey) else {
+             return AsyncStream { c in c.yield("No model selected."); c.finish() }
         }
+        
+        let path = localModelURL(filename)
+        let template = Template.chatML("You are a helpful assistant. Answer concisely and directly.")
+        
+        // Re-load LLM to clear context
+        guard let newLLM = LLM(from: path, template: template) else {
+             return AsyncStream { c in c.yield("Failed to load model."); c.finish() }
+        }
+        self.llm = newLLM
+        self.shouldStop = false
 
         let prompt = buildPrompt(text)
-        history.append(("user", text))
 
         return AsyncStream { continuation in
-            let originalUpdate = llm.update
-            llm.update = { delta in
+            let originalUpdate = newLLM.update
+            
+            newLLM.update = { delta in
                 Task { @MainActor in
+                    if self.shouldStop {
+                        continuation.finish()
+                        return
+                    }
+                    
                     if let d = delta {
                         continuation.yield(d)
                     } else {
@@ -257,19 +267,15 @@ final class LLMService: ObservableObject {
             }
 
             Task {
-                await llm.respond(to: prompt)
-
-                // Save final assistant message
-                let final = llm.output.trimmingCharacters(in: .whitespacesAndNewlines)
-                history.append(("assistant", final))
-
-                llm.update = originalUpdate
+                await newLLM.respond(to: prompt)
+                newLLM.update = originalUpdate
+                continuation.finish()
             }
 
             continuation.onTermination = { _ in
                 Task { @MainActor in
-                    llm.stop()
-                    llm.update = originalUpdate
+                    newLLM.stop()
+                    newLLM.update = originalUpdate
                 }
             }
         }
@@ -277,17 +283,29 @@ final class LLMService: ObservableObject {
 
     // MARK: - NON-STREAMING (Final output only)
     func sendMessage(_ text: String) async -> String {
-        guard let llm else { return "Model not loaded." }
+        // STATELESS MODE: Re-init model for every request to ensure fresh context.
+        guard let filename = UserDefaults.standard.string(forKey: selectedModelKey) else { return "No model selected." }
+        
+        let path = localModelURL(filename)
+        let template = Template.chatML("You are a helpful assistant. Answer concisely and directly. Do not hallucinate.")
+        
+        guard let newLLM = LLM(from: path, template: template) else { return "Failed to load model." }
+        self.llm = newLLM
 
         let prompt = buildPrompt(text)
-        history.append(("user", text))
+        await newLLM.respond(to: prompt)
 
-        await llm.respond(to: prompt)
-
-        let output = llm.output.trimmingCharacters(in: .whitespacesAndNewlines)
-        history.append(("assistant", output))
-
-        return output
+        return newLLM.output.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    // MARK: - STOP GENERATION
+    private var shouldStop = false
+    
+    func stopGeneration() {
+        Task { @MainActor in
+            shouldStop = true
+            llm?.stop()
+        }
     }
 }
 
@@ -320,7 +338,18 @@ private final class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
     func urlSession(_ session: URLSession,
                     downloadTask: URLSessionDownloadTask,
                     didFinishDownloadingTo location: URL) {
-        onComplete(location)
+        // The file at `location` is deleted as soon as this method returns.
+        // We must move it to a safe temporary location synchronously.
+        let safeTempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        do {
+            if FileManager.default.fileExists(atPath: safeTempURL.path) {
+                try FileManager.default.removeItem(at: safeTempURL)
+            }
+            try FileManager.default.moveItem(at: location, to: safeTempURL)
+            onComplete(safeTempURL)
+        } catch {
+            onError(error)
+        }
     }
 
     func urlSession(_ session: URLSession,

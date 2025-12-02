@@ -70,7 +70,7 @@ struct SettingsView: View {
                         modelActionView(model: $model)
                     }
                     .padding(6)
-                    .background(model.isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
+//                    .background(model.isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .contentShape(Rectangle())
                     .onTapGesture {
@@ -137,14 +137,14 @@ struct SettingsView: View {
 
         case .downloaded:
             if model.wrappedValue.isSelected {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.accentColor)
+                Text("selected")
+                    .foregroundColor(.green)
             } else {
                 Button("Select") {
                     AppLogger.log(category: AppLogger.settings, message: "User tapped Select button for: \(model.wrappedValue.name)")
                     Task { await service.loadModel(filename: model.wrappedValue.filename) }
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderless)
             }
 
         case .failed:
