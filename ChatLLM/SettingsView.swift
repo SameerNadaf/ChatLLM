@@ -132,7 +132,7 @@ struct SettingsView: View {
                     .font(.caption)
                 ProgressView(value: progress)
                     .progressViewStyle(.linear)
-                    .frame(width: 60)
+                    .frame(width: 80)
             }
 
         case .downloaded:

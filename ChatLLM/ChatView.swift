@@ -23,9 +23,6 @@ struct ChatView: View {
             VStack(spacing: 0) {
                 messagesScrollView
             }
-            .onTapGesture {
-                hideKeyboard()
-            }
             .navigationTitle("ChatLLM")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -52,7 +49,7 @@ struct ChatView: View {
             // Lottie Placeholder when empty
             if messages.isEmpty && !isGenerating && !keyboardState.isVisible {
                 VStack {
-                    LottieAnimationView(fileName: "emptyGhost", title: "Start a conversation!", subtitle: "Start fresh conversation with ChatLLM")
+                    LottieAnimationView(fileName: "emptyGhost", title: "Start a conversation!")
                 }
             }
 
@@ -93,16 +90,17 @@ struct ChatView: View {
             TextField("Ask the model...", text: $inputText, axis: .vertical)
                 .padding()
                 .frame(minHeight: 44)
-                .background(.white)
+                .background(Color("backgroundColor"))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             
             Button {
+                hideKeyboard()
                 Task { await sendTapped() }
             } label: {
                 Image(systemName: "paperplane.fill")
                     .font(.system(size: 26))
             }
-            .disabled(inputText.isEmpty || isGenerating || !service.isModelReady)
+            .disabled(inputText.isEmpty || isGenerating) // !service.isModelReady
         }
         .padding()
     }
@@ -178,7 +176,6 @@ extension View {
                                         to: nil, from: nil, for: nil)
     }
 }
-
 
 #Preview {
     ChatView()

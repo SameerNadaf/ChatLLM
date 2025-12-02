@@ -11,7 +11,6 @@ import Lottie
 struct LottieAnimationView: View {
     let fileName: String
     let title: String
-    let subtitle: String
     
     var body: some View {
         VStack(spacing: 20) {
@@ -22,12 +21,6 @@ struct LottieAnimationView: View {
                 .font(.title3)
                 .bold()
                 .foregroundColor(.gray)
-            
-            Text(subtitle)
-                .font(.body)
-                .foregroundColor(.gray)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 20)
         }
         .frame(maxWidth: .infinity)
         .frame(height: 500)
@@ -35,5 +28,5 @@ struct LottieAnimationView: View {
 }
 
 #Preview {
-    LottieAnimationView(fileName: "emptyGhost.json", title: "No Data", subtitle: "this is an sample subtitle for empty state")
+    LottieAnimationView(fileName: "emptyGhost.json", title: "No Data")
 }
