@@ -48,21 +48,39 @@ final class LLMService: ObservableObject {
     init() {
 
         self.availableModels = [
-            // QWEN 2.5 (1.5B) — BEST small model
-            AvailableModel(
-                name: "Qwen2.5 1.5B Instruct",
-                filename: "qwen2.5-1.5b-instruct-q4_k_m.gguf",
-                downloadUrl: URL(string:
-                    "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf?download=1"
-                )!
-            ),
-
             // TINYLLAMA 1.1B — FASTEST
             AvailableModel(
                 name: "TinyLlama 1.1B Chat",
                 filename: "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf",
                 downloadUrl: URL(string:
-                    "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf?download=1"
+                    "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf"
+                )!
+            ),
+            
+            // QWEN 2 (1.5B) — BEST small model
+            AvailableModel(
+                name: "Qwen2 1.5B Instruct",
+                filename: "qwen2-1_5b-instruct-q4_k_m.gguf",
+                downloadUrl: URL(string:
+                    "https://huggingface.co/Qwen/Qwen2-1.5B-Instruct-GGUF/resolve/main/qwen2-1_5b-instruct-q4_k_m.gguf"
+                )!
+            ),
+            
+            // Phi-2 2.7B
+            AvailableModel(
+                name: "Phi-2 2.7B",
+                filename: "phi-2.Q4_K_M.gguf",
+                downloadUrl: URL(string:
+                                    "https://huggingface.co/TheBloke/phi-2-GGUF/resolve/main/phi-2.Q4_K_M.gguf"
+                )!
+            ),
+            
+            // Phi-3 Mini 3.8B
+            AvailableModel(
+                name: "Phi-3 Mini 3.8B",
+                filename: "phi-3-mini-4k-instruct-q4_k_m.gguf",
+                downloadUrl: URL(string:
+                                    "https://huggingface.co/SixOpen/Phi-3-mini-4k-instruct-Q4_K_M-GGUF/resolve/main/phi-3-mini-4k-instruct-q4_k_m.gguf"
                 )!
             ),
 
@@ -71,7 +89,7 @@ final class LLMService: ObservableObject {
                 name: "Mistral 7B Instruct",
                 filename: "mistral-7b-instruct-v0.2.Q4_K_M.gguf",
                 downloadUrl: URL(string:
-                    "https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/resolve/main/mistral-7b-instruct-v0.2.Q4_K_M.gguf?download=1"
+                    "https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/resolve/main/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
                 )!
             )
         ]
