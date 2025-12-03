@@ -118,6 +118,9 @@ struct ChatView: View {
                     }
                 }
             }
+            .onTapGesture {
+                hideKeyboard()
+            }
         }
     }
 
