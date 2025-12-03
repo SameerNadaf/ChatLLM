@@ -60,6 +60,17 @@ final class LLMService: ObservableObject {
                 )!
             ),
             
+            // DEEPSEEK CODER 1.3B INSTRUCT — High-Performance Coding, Ultra-Low RAM
+            AvailableModel(
+                name: "Deepseek-Coder 1.3B",
+                filename: "deepseek-coder-1.3b-instruct.Q4_K_M.gguf",
+                description: "Highly optimized.",
+                size: "833 MB",
+                downloadUrl: URL(string:
+                    "https://huggingface.co/TheBloke/deepseek-coder-1.3b-instruct-GGUF/resolve/main/deepseek-coder-1.3b-instruct.Q4_K_M.gguf"
+                )!
+            ),
+            
             // QWEN 2 (1.5B) — BEST small model
             AvailableModel(
                 name: "Qwen2 1.5B Instruct",
@@ -86,7 +97,7 @@ final class LLMService: ObservableObject {
             AvailableModel(
                 name: "Qwen2.5-Coder 3B",
                 filename: "Qwen2.5-Coder-3B-Q3_K_M.gguf",
-                description: "Best for coding and math.",
+                description: "Best coding and math.",
                 size: "1.59 GB",
                 downloadUrl: URL(string:
                     "https://huggingface.co/bartowski/Qwen2.5-Coder-3B-GGUF/resolve/main/Qwen2.5-Coder-3B-Q3_K_M.gguf"
@@ -200,6 +211,7 @@ final class LLMService: ObservableObject {
 
     // MARK: - Model Loading
     func loadModel(filename: String) async {
+        // 1. Update UI state on MainActor
         isModelLoading = true
         isModelReady = false
         llm = nil
@@ -210,29 +222,31 @@ final class LLMService: ObservableObject {
             return
         }
 
-        do {
+        // 2. Offload heavy initialization to a background thread
+        //    Using Task.detached keeps it off the MainActor.
+        let loadedLLM: LLM? = await Task.detached(priority: .userInitiated) {
             let template = Template.chatML("You are a helpful assistant. Answer concisely and directly.")
-            guard let loaded = LLM(from: path, template: template) else {
-                print("Failed to init LLM: returned nil")
-                isModelLoading = false
-                return
-            }
+            // This is the blocking call:
+            return LLM(from: path, template: template)
+        }.value
 
-            llm = loaded
-            isModelReady = true
-
-
-            for i in availableModels.indices { availableModels[i].isSelected = false }
-            if let idx = availableModels.firstIndex(where: { $0.filename == filename }) {
-                availableModels[idx].isSelected = true
-            }
-
-            UserDefaults.standard.set(filename, forKey: selectedModelKey)
-
-        } catch {
-            print("LLM init error:", error)
+        // 3. Back on MainActor, update state
+        guard let validLLM = loadedLLM else {
+            print("Failed to init LLM: returned nil")
+            isModelLoading = false
+            return
         }
 
+        self.llm = validLLM
+        self.isModelReady = true
+
+        // Update selection state
+        for i in availableModels.indices { availableModels[i].isSelected = false }
+        if let idx = availableModels.firstIndex(where: { $0.filename == filename }) {
+            availableModels[idx].isSelected = true
+        }
+
+        UserDefaults.standard.set(filename, forKey: selectedModelKey)
         isModelLoading = false
     }
 
