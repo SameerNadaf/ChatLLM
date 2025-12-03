@@ -82,17 +82,6 @@ final class LLMService: ObservableObject {
                 )!
             ),
             
-            // Phi-2 2.7B
-            AvailableModel(
-                name: "Phi-2 2.7B",
-                filename: "phi-2.Q4_K_M.gguf",
-                description: "Strong coding + math.",
-                size: "1.6 GB",
-                downloadUrl: URL(string:
-                                    "https://huggingface.co/TheBloke/phi-2-GGUF/resolve/main/phi-2.Q4_K_M.gguf"
-                )!
-            ),
-            
             // QWEN 2.5 CODER 3B — Best for Coding/Math with Low RAM
             AvailableModel(
                 name: "Qwen2.5-Coder 3B",
@@ -329,6 +318,10 @@ final class LLMService: ObservableObject {
             shouldStop = true
             llm?.stop()
         }
+    }
+    
+    var currentModelName: String {
+        availableModels.first(where: { $0.isSelected })?.name ?? "AI"
     }
 }
 

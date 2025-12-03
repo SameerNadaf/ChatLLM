@@ -62,14 +62,15 @@ struct ChatView: View {
                 ScrollView {
                     LazyVStack {
                         ForEach(messages) { message in
-                            ChatBubble(message: message, showActions: true)
+                            ChatBubble(message: message, showActions: true, modelName: message.modelName ?? "AI")
                                 .id(message.id)
                         }
 
                         if isGenerating {
                             ChatBubble(
                                 message: ChatMessage(text: streamingResponse + "█", isUser: false),
-                                showActions: false
+                                showActions: false,
+                                modelName: service.currentModelName
                             )
                             .id("stream")
                         }
@@ -161,7 +162,7 @@ struct ChatView: View {
         AppLogger.log(category: AppLogger.chat, message: "User tapped send. Input length: \(userText.count)")
         inputText = ""
         
-        messages.append(ChatMessage(text: userText, isUser: true))
+        messages.append(ChatMessage(text: userText, isUser: true, modelName: nil))
         
         isGenerating = true
         streamingResponse = ""
@@ -178,7 +179,7 @@ struct ChatView: View {
         
         // Commit assistant message
         if !streamingResponse.isEmpty {
-            messages.append(ChatMessage(text: streamingResponse, isUser: false))
+            messages.append(ChatMessage(text: streamingResponse, isUser: false, modelName: service.currentModelName))
             AppLogger.log(category: AppLogger.chat, message: "Assistant message appended to chat.")
         } else {
             AppLogger.log(category: AppLogger.chat, message: "Stream response was empty.", type: .fault)
@@ -195,11 +196,13 @@ struct ChatMessage: Identifiable {
     let id = UUID()
     let text: String
     let isUser: Bool
+    var modelName: String? = nil
 }
 
 struct ChatBubble: View {
     let message: ChatMessage
     var showActions: Bool = true
+    var modelName: String = "AI"
     @State private var isCopied = false
     @State private var liked: Bool? = nil   // nil = no vote, true = like, false = dislike
     
@@ -211,12 +214,19 @@ struct ChatBubble: View {
                 if !message.isUser {
                     // Optional avatar
                     VStack(alignment: .leading) {
-                        Image("chatAI")
-                            .renderingMode(.template)
-                            .resizable()
-                            .scaledToFit()
-                            .foregroundStyle(.primary)
-                            .frame(width: 25, height: 25)
+                        HStack {
+                            Image("chatAI")
+                                .renderingMode(.template)
+                                .resizable()
+                                .scaledToFit()
+                                .foregroundStyle(.secondary)
+                                .frame(width: 22, height: 22)
+                            
+                            Text(modelName)
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.secondary)
+                        }
                         
                         // MARKDOWN MESSAGE
                         VStack(alignment: .leading, spacing: 8) {
@@ -227,8 +237,8 @@ struct ChatBubble: View {
                                         .foregroundColor(.primary)
                                         .font(.body)
                                         .fixedSize(horizontal: false, vertical: true)
-                                case .code(let code):
-                                    CodeBlockView(code: code)
+                                case .code(let language, let code):
+                                    CodeBlockView(language: language, code: code)
                                 }
                             }
                         }
@@ -312,7 +322,7 @@ extension View {
 
 enum MarkdownBlockType {
     case text(String)
-    case code(String)
+    case code(String, String) // language, code
 }
 
 struct MarkdownBlock: Identifiable {
@@ -333,9 +343,28 @@ func parseMarkdown(_ text: String) -> [MarkdownBlock] {
             }
         } else {
             // Odd indices are code blocks
-            let trimmed = component.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !trimmed.isEmpty {
-                blocks.append(MarkdownBlock(type: .code(trimmed)))
+            // Try to extract language from the first line
+            let lines = component.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false)
+            
+            var language = "Code"
+            var codeContent = component
+            
+            if let firstLine = lines.first {
+                let potentialLang = firstLine.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !potentialLang.isEmpty {
+                    language = potentialLang
+                    // If we found a language, the code is the rest
+                    if lines.count > 1 {
+                        codeContent = String(lines[1])
+                    } else {
+                        codeContent = ""
+                    }
+                }
+            }
+            
+            let trimmedCode = codeContent.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmedCode.isEmpty {
+                blocks.append(MarkdownBlock(type: .code(language, trimmedCode)))
             }
         }
     }
@@ -349,6 +378,7 @@ func parseMarkdown(_ text: String) -> [MarkdownBlock] {
 }
 
 struct CodeBlockView: View {
+    let language: String
     let code: String
     @State private var isCopied = false
     
@@ -356,7 +386,7 @@ struct CodeBlockView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
             HStack {
-                Text("Code")
+                Text(language.capitalized)
                     .font(.caption2)
                     .fontWeight(.bold)
                     .foregroundColor(.secondary)
