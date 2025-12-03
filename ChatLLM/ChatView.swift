@@ -46,15 +46,15 @@ struct ChatView: View {
     }
     
     // MARK: - Scrollable messages
-    // MARK: - Scrollable messages
     var messagesScrollView: some View {
         ZStack(alignment: .bottomTrailing) {
             // Lottie Placeholder when empty
             if messages.isEmpty && !isGenerating && !keyboardState.isVisible {
                 VStack {
                     LottieAnimationView(fileName: "emptyGhost", title: "Start a conversation!")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding(.bottom, 40)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
 
             // Actual Messages + Streaming Bubble
@@ -106,9 +106,10 @@ struct ChatView: View {
                                 proxy.scrollTo("bottom", anchor: .bottom)
                             }
                         } label: {
-                            Image(systemName: "arrow.down.circle.fill")
+                            Image(systemName: "arrow.down.circle")
                                 .font(.system(size: 32))
-                                .background(Circle().fill(Color.accentColor))
+                                .foregroundStyle(Color("backgroundColor"))
+                                .background(Circle().fill(Color.primary))
                                 .shadow(radius: 4)
                         }
                         .padding(20)
@@ -124,7 +125,7 @@ struct ChatView: View {
     var inputBar: some View {
         HStack {
             TextField("Ask the model...", text: $inputText, axis: .vertical)
-                .padding()
+                .padding(.horizontal)
                 .frame(minHeight: 44)
                 .background(Color("backgroundColor"))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -215,13 +216,24 @@ struct ChatBubble: View {
                             .resizable()
                             .scaledToFit()
                             .foregroundStyle(.primary)
-                            .frame(width: 30, height: 30)
+                            .frame(width: 25, height: 25)
                         
-                        Text(message.text)
-                            .foregroundColor(.primary)
-                            .font(.body)
-                            .padding(.vertical, 6)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                        // MARKDOWN MESSAGE
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(parseMarkdown(message.text), id: \.id) { block in
+                                switch block.type {
+                                case .text(let content):
+                                    Text(.init(content)) // Use SwiftUI Markdown for bold/italics
+                                        .foregroundColor(.primary)
+                                        .font(.body)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                case .code(let code):
+                                    CodeBlockView(code: code)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 6)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
                 
@@ -248,14 +260,13 @@ struct ChatBubble: View {
                         withAnimation {
                             isCopied = true
                         }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                             withAnimation {
                                 isCopied = false
                             }
                         }
                     } label: {
-                        Label(isCopied ? "Copied" : "Copy",
-                              systemImage: isCopied ? "checkmark" : "doc.on.doc")
+                        Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
                             .font(.caption)
                     }
                     .buttonStyle(.borderless)
@@ -294,6 +305,94 @@ extension View {
     func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
                                         to: nil, from: nil, for: nil)
+    }
+}
+
+// MARK: - Markdown Helpers
+
+enum MarkdownBlockType {
+    case text(String)
+    case code(String)
+}
+
+struct MarkdownBlock: Identifiable {
+    let id = UUID()
+    let type: MarkdownBlockType
+}
+
+func parseMarkdown(_ text: String) -> [MarkdownBlock] {
+    var blocks: [MarkdownBlock] = []
+    let components = text.components(separatedBy: "```")
+    
+    for (index, component) in components.enumerated() {
+        if index % 2 == 0 {
+            // Even indices are regular text
+            let trimmed = component.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty {
+                blocks.append(MarkdownBlock(type: .text(trimmed)))
+            }
+        } else {
+            // Odd indices are code blocks
+            let trimmed = component.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty {
+                blocks.append(MarkdownBlock(type: .code(trimmed)))
+            }
+        }
+    }
+    
+    // Fallback if empty (shouldn't happen often)
+    if blocks.isEmpty && !text.isEmpty {
+        blocks.append(MarkdownBlock(type: .text(text)))
+    }
+    
+    return blocks
+}
+
+struct CodeBlockView: View {
+    let code: String
+    @State private var isCopied = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Header
+            HStack {
+                Text("Code")
+                    .font(.caption2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.secondary)
+                Spacer()
+                Button {
+                    UIPasteboard.general.string = code
+                    withAnimation { isCopied = true }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        withAnimation { isCopied = false }
+                    }
+                } label: {
+                    Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
+//                    Label(isCopied ? "Copied" : "Copy", systemImage: isCopied ? "checkmark" : "doc.on.doc")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.secondary.opacity(0.1))
+            
+            // Code Content
+            ScrollView(.horizontal, showsIndicators: true) {
+                Text(code)
+                    .font(.system(.caption, design: .monospaced))
+                    .padding(10)
+                    .foregroundColor(.primary)
+            }
+        }
+        .background(Color.secondary.opacity(0.05))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+        )
     }
 }
 

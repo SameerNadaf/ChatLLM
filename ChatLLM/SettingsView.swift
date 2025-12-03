@@ -9,6 +9,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var service: LLMService
+    @State private var showDeleteAlert = false
+    @State private var modelToDelete: AvailableModel?
 
     var body: some View {
         List {
@@ -23,9 +25,12 @@ struct SettingsView: View {
                         VStack(alignment: .leading) {
                             Text(model.name)
                                 .fontWeight(.medium)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.9)
                             
                             Text(model.description)
                                 .font(.caption)
+                                .lineLimit(1)
                             
                             HStack {
                                 RoundedRectangle(cornerRadius: 6)
@@ -108,6 +113,16 @@ struct SettingsView: View {
                 }
             }
         }
+        .alert("Delete Model?", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                if let model = modelToDelete {
+                    service.deleteModel(model)
+                }
+            }
+        } message: {
+            Text("Are you sure you want to delete \(modelToDelete?.name ?? "this model")? You will need to download it again to use it.")
+        }
         .navigationTitle("AI Settings")
         .onAppear {
             AppLogger.log(category: AppLogger.settings, message: "SettingsView appeared.")
@@ -137,14 +152,36 @@ struct SettingsView: View {
 
         case .downloaded:
             if model.wrappedValue.isSelected {
-                Text("selected")
-                    .foregroundColor(.green)
-            } else {
-                Button("Select") {
-                    AppLogger.log(category: AppLogger.settings, message: "User tapped Select button for: \(model.wrappedValue.name)")
-                    Task { await service.loadModel(filename: model.wrappedValue.filename) }
+                HStack {
+                    Text("Selected")
+                        .foregroundColor(.green)
+                    
+                    Button {
+                        modelToDelete = model.wrappedValue
+                        showDeleteAlert = true
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
+                    }
+                    .buttonStyle(.borderless)
                 }
-                .buttonStyle(.borderless)
+            } else {
+                HStack {
+                    Button("Select") {
+                        AppLogger.log(category: AppLogger.settings, message: "User tapped Select button for: \(model.wrappedValue.name)")
+                        Task { await service.loadModel(filename: model.wrappedValue.filename) }
+                    }
+                    .buttonStyle(.borderless)
+                    
+                    Button {
+                        modelToDelete = model.wrappedValue
+                        showDeleteAlert = true
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
+                    }
+                    .buttonStyle(.borderless)
+                }
             }
 
         case .failed:

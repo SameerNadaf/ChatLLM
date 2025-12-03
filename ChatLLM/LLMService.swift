@@ -71,6 +71,17 @@ final class LLMService: ObservableObject {
                 )!
             ),
             
+            // GEMMA 2B — Safest/Fastest for Math/General Reasoning with Extremely Low RAM
+            AvailableModel(
+                name: "Gemma 2B Instruct",
+                filename: "gemma-2-2b-it-Q4_K_M.gguf",
+                description: "Best speed & reasoning.",
+                size: "1.6 GB",
+                downloadUrl: URL(string:
+                    "https://huggingface.co/bartowski/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf"
+                )!
+            ),
+            
             // Phi-2 2.7B
             AvailableModel(
                 name: "Phi-2 2.7B",
@@ -82,25 +93,14 @@ final class LLMService: ObservableObject {
                 )!
             ),
             
-            // Phi-3 Mini 3.8B
+            // QWEN 2.5 CODER 3B — Best for Coding/Math with Low RAM
             AvailableModel(
-                name: "Phi-3 Mini 3.8B",
-                filename: "phi-3-mini-4k-instruct-q4_k_m.gguf",
-                description: "Capable general model.",
-                size: "2.3 GB",
+                name: "Qwen2.5-Coder 3B",
+                filename: "Qwen2.5-Coder-3B-Q3_K_M.gguf",
+                description: "Best for coding and math.",
+                size: "1.59 GB",
                 downloadUrl: URL(string:
-                                    "https://huggingface.co/SixOpen/Phi-3-mini-4k-instruct-Q4_K_M-GGUF/resolve/main/phi-3-mini-4k-instruct-q4_k_m.gguf"
-                )!
-            ),
-
-            // MISTRAL 7B — HEAVY (iPhone might struggle)
-            AvailableModel(
-                name: "Mistral 7B Instruct",
-                filename: "mistral-7b-instruct-v0.2.Q4_K_M.gguf",
-                description: "Best reasoning, heaviest.",
-                size: "4.1 GB",
-                downloadUrl: URL(string:
-                    "https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/resolve/main/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
+                    "https://huggingface.co/bartowski/Qwen2.5-Coder-3B-GGUF/resolve/main/Qwen2.5-Coder-3B-Q3_K_M.gguf"
                 )!
             )
         ]
@@ -184,6 +184,29 @@ final class LLMService: ObservableObject {
 
         let task = session.downloadTask(with: request)
         task.resume()
+    }
+
+    func deleteModel(_ model: AvailableModel) {
+        guard let idx = availableModels.firstIndex(where: { $0.id == model.id }) else { return }
+        let path = localModelURL(model.filename)
+        
+        do {
+            if fm.fileExists(atPath: path.path) {
+                try fm.removeItem(at: path)
+            }
+            availableModels[idx].downloadState = .notDownloaded
+            availableModels[idx].isSelected = false
+            
+            // If the deleted model was the active one, clear the active state
+            if let current = UserDefaults.standard.string(forKey: selectedModelKey), current == model.filename {
+                UserDefaults.standard.removeObject(forKey: selectedModelKey)
+                llm = nil
+                isModelReady = false
+            }
+            
+        } catch {
+            print("Error deleting model: \(error)")
+        }
     }
 
     // MARK: - Model Loading
