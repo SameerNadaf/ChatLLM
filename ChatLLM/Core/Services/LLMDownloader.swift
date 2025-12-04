@@ -7,8 +7,15 @@
 
 import Foundation
 
+/// Handles downloading of LLM models from remote URLs.
 final class LLMDownloader {
 
+    /// Downloads a model file from the specified URL.
+    /// - Parameters:
+    ///   - model: The model to download.
+    ///   - progress: A closure called periodically with the download progress (0.0 to 1.0).
+    ///   - completion: A closure called with the local URL of the downloaded file upon success.
+    ///   - failure: A closure called with an error message upon failure.
     func download(
         model: AvailableModel,
         progress: @escaping (Double) -> Void,
@@ -35,11 +42,17 @@ final class LLMDownloader {
     }
 }
 
+/// Delegate for handling URLSession download events.
 final class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
     let onProgress: (Double) -> Void
     let onComplete: (URL) -> Void
     let onError: (Error) -> Void
 
+    /// Initializes the download delegate.
+    /// - Parameters:
+    ///   - onProgress: Callback for progress updates.
+    ///   - onComplete: Callback for successful completion.
+    ///   - onError: Callback for errors.
     init(
         onProgress: @escaping (Double) -> Void,
         onComplete: @escaping (URL) -> Void,

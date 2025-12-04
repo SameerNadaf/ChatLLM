@@ -7,23 +7,27 @@
 
 import Foundation
 
+/// Defines the type of a markdown block.
 enum MarkdownBlockType {
     case text(String)
     case code(String, String) // language, code
 }
 
+/// Represents a parsed block of markdown content.
 struct MarkdownBlock: Identifiable {
     let id = UUID()
     let type: MarkdownBlockType
 }
 
+/// Parses a raw markdown string into a list of structured blocks.
+/// - Parameter text: The raw markdown text to parse.
+/// - Returns: An array of `MarkdownBlock` objects representing the parsed content.
 func parseMarkdown(_ text: String) -> [MarkdownBlock] {
     var blocks: [MarkdownBlock] = []
     let components = text.components(separatedBy: "```")
     
     for (index, component) in components.enumerated() {
         if index % 2 == 0 {
-            // Even indices are regular text
             let trimmed = component.trimmingCharacters(in: .whitespacesAndNewlines)
             if !trimmed.isEmpty {
                 blocks.append(MarkdownBlock(type: .text(trimmed)))

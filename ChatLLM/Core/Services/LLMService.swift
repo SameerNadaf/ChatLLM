@@ -10,11 +10,15 @@ import SwiftUI
 import LLM
 
 @MainActor
+/// The primary service responsible for managing LLM models, downloads, and chat interactions.
 final class LLMService: ObservableObject {
 
     // Published (UI Reactive)
+    /// List of available models with their current states.
     @Published var availableModels: [AvailableModel]
+    /// Indicates if a model is currently being loaded into memory.
     @Published var isModelLoading = false
+    /// Indicates if a model is loaded and ready for generation.
     @Published var isModelReady = false
 
     // Internal State
@@ -29,6 +33,7 @@ final class LLMService: ObservableObject {
     private let selectedModelKey = "SelectedModelFilename"
 
     // Init
+    /// Initializes the LLM service, sets up directories, and loads the previously selected model if available.
     init() {
         self.availableModels = LLMService.defaultModels
 
@@ -112,6 +117,8 @@ extension LLMService {
 // MARK: - Download
 extension LLMService {
 
+    /// Initiates the download of a specific model.
+    /// - Parameter model: The model to download.
     func downloadModel(_ model: AvailableModel) {
         guard let idx = availableModels.firstIndex(where: { $0.id == model.id }) else { return }
 
@@ -148,6 +155,8 @@ extension LLMService {
 // MARK: - Delete Model
 extension LLMService {
 
+    /// Deletes a downloaded model from local storage.
+    /// - Parameter model: The model to delete.
     func deleteModel(_ model: AvailableModel) {
         guard let idx = availableModels.firstIndex(where: { $0.id == model.id }) else { return }
 
@@ -171,6 +180,8 @@ extension LLMService {
 // MARK: - Load Model
 extension LLMService {
 
+    /// Loads a model into memory for use.
+    /// - Parameter filename: The filename of the model to load.
     func loadModel(filename: String) async {
         isModelLoading = true
         isModelReady = false
@@ -215,6 +226,9 @@ extension LLMService {
 // MARK: - Streaming Message
 extension LLMService {
 
+    /// Sends a message to the LLM and returns a stream of generated text.
+    /// - Parameter text: The user's input text.
+    /// - Returns: An async stream of strings representing the generated response.
     func sendMessageStream(_ text: String) async -> AsyncStream<String> {
 
         guard let filename = UserDefaults.standard.string(forKey: selectedModelKey) else {
@@ -271,6 +285,9 @@ extension LLMService {
 // MARK: - Non-Streaming Message
 extension LLMService {
 
+    /// Sends a message to the LLM and waits for the full response.
+    /// - Parameter text: The user's input text.
+    /// - Returns: The complete generated response string.
     func sendMessage(_ text: String) async -> String {
 
         guard let filename = UserDefaults.standard.string(forKey: selectedModelKey) else {
@@ -296,6 +313,7 @@ extension LLMService {
 // MARK: - Stop Generation
 extension LLMService {
 
+    /// Stops the current text generation process.
     func stopGeneration() {
         Task { @MainActor in
             shouldStop = true
@@ -303,6 +321,7 @@ extension LLMService {
         }
     }
 
+    /// The name of the currently selected model, or "AI" if none is selected.
     var currentModelName: String {
         availableModels.first(where: { $0.isSelected })?.name ?? "AI"
     }

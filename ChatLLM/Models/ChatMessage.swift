@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Represents a single message in the chat conversation.
 struct ChatMessage: Identifiable {
     let id = UUID()
     let text: String
