@@ -56,7 +56,6 @@ extension SettingsViewContent {
                 .padding(6)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .contentShape(Rectangle())
-                .onTapGesture { vm.tapModelRow(model) }
             }
         }
     }
@@ -134,19 +133,21 @@ extension SettingsViewContent {
                     } label: {
                         Image(systemName: "trash").foregroundColor(.red)
                     }
+                    .buttonStyle(.plain)
                 }
             } else {
                 HStack {
                     Button("Select") {
                         vm.select(model.wrappedValue)
                     }
-                    .buttonStyle(.borderless)
+                    .buttonStyle(.bordered)
 
                     Button {
                         vm.requestDelete(model.wrappedValue)
                     } label: {
                         Image(systemName: "trash").foregroundColor(.red)
                     }
+                    .buttonStyle(.plain)
                 }
             }
 

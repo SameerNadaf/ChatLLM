@@ -56,15 +56,6 @@ extension SettingsViewModel {
     
     // MARK: - User Actions
     
-    func tapModelRow(_ model: AvailableModel) {
-        switch model.downloadState {
-        case .downloaded:
-            Task { await service.loadModel(filename: model.filename) }
-        default:
-            break
-        }
-    }
-    
     func requestDelete(_ model: AvailableModel) {
         modelToDelete = model
         showDeleteAlert = true
