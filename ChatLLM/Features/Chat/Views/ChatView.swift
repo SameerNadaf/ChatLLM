@@ -122,18 +122,18 @@ extension ChatViewContent {
 extension ChatViewContent {
     var inputBar: some View {
         HStack {
-            TextField("Ask the model...", text: $vm.inputText, axis: .vertical)
+            TextField("Ask anything", text: $vm.inputText, axis: .vertical)
                 .padding(.horizontal)
                 .frame(minHeight: 44)
                 .background(Color("backgroundColor"))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(Capsule(style: .circular))
             
             if vm.isGenerating {
                 Button {
                     vm.stopGeneration()
                 } label: {
                     Image(systemName: "stop.circle.fill")
-                        .font(.system(size: 30))
+                        .font(.system(size: 32))
                         .foregroundColor(.red)
                 }
             } else {
@@ -141,8 +141,8 @@ extension ChatViewContent {
                     hideKeyboard()
                     Task { await vm.sendTapped() }
                 } label: {
-                    Image(systemName: "paperplane.fill")
-                        .font(.system(size: 26))
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 32))
                 }
                 .disabled(vm.inputText.isEmpty)
             }
